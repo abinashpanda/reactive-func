@@ -1,8 +1,8 @@
 import { z, ZodError } from 'zod'
 import type { Message } from './message'
 
-type Unsubscribe = () => void
-type MessageHandler = (message: Message) => void | Promise<void>
+export type Unsubscribe = () => void
+export type MessageHandler = (message: Message) => void | Promise<void>
 
 export class MessageQueue {
   /**
@@ -55,7 +55,7 @@ export class MessageQueue {
 class IO {
   constructor(
     private readonly messageQueue: MessageQueue,
-    private readonly toolChannel: string,
+    private readonly session: string,
   ) {}
 
   // TODO: Add validation checks
@@ -67,9 +67,10 @@ class IO {
     required?: T
   }): Promise<T extends true ? string : string | undefined> => {
     const id = generateId()
-    this.messageQueue.publishMessage(this.toolChannel, {
+    this.messageQueue.publishMessage(this.session, {
       id,
       timestamp: Date.now(),
+      session: this.session,
       type: 'RENDER_INPUT_FORM',
       form: {
         value: { type: 'TEXT_INPUT', label, required },
@@ -77,7 +78,7 @@ class IO {
     })
     return new Promise((resolve, reject) => {
       const unsubcribe = this.messageQueue.subscribeChannel(
-        this.toolChannel,
+        this.session,
         (message) => {
           if (
             message.type === 'INPUT_FORM_RESPONSE' &&
@@ -112,7 +113,7 @@ type ToolConfig = {
 }
 type Handler = (args: { io: IO }) => Promise<unknown>
 
-class Tool {
+export class Tool {
   private readonly handler: Handler
   private readonly toolName: string
   private readonly slug: string
@@ -134,22 +135,23 @@ class Tool {
   }
 
   run(session: string, messageQueue: MessageQueue) {
-    const toolChannel = `${this.slug}:${session}`
-    const io = new IO(messageQueue, toolChannel)
+    const io = new IO(messageQueue, session)
     this.handler({ io })
       .then((output) => {
-        messageQueue.publishMessage(toolChannel, {
+        messageQueue.publishMessage(session, {
           id: generateId(),
           timestamp: Date.now(),
           type: 'TOOL_COMPLETION',
+          session,
           output,
         })
       })
       .catch((error) => {
-        messageQueue.publishMessage(toolChannel, {
+        messageQueue.publishMessage(session, {
           id: generateId(),
           timestamp: Date.now(),
           type: 'TOOL_ERROR',
+          session,
           errorMessage: getErrorMessage(error),
         })
       })

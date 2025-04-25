@@ -22,16 +22,21 @@ type FieldData = z.infer<typeof fieldDataSchema>
 const baseMessageSchema = z.object({ id: z.string(), timestamp: z.number() })
 export const messageSchema = z.discriminatedUnion('type', [
   baseMessageSchema.extend({
+    type: z.literal('RELOAD'),
+  }),
+  baseMessageSchema.extend({
     type: z.literal('START_TOOL'),
     session: z.string(),
   }),
   baseMessageSchema.extend({
     type: z.literal('START_TOOL_SUCCESS'),
     parentMessageId: z.string(),
+    session: z.string(),
   }),
   baseMessageSchema.extend({
     type: z.literal('START_TOOL_FAILURE'),
     parentMessageId: z.string(),
+    session: z.string(),
   }),
   baseMessageSchema.extend({
     type: z.literal('RECONNECT_TOOL_SESSION'),
@@ -40,25 +45,30 @@ export const messageSchema = z.discriminatedUnion('type', [
   baseMessageSchema.extend({
     type: z.literal('RENDER_INPUT_FORM'),
     form: z.record(z.string(), fieldSchema),
+    session: z.string(),
   }),
   baseMessageSchema.extend({
     type: z.literal('INPUT_FORM_RESPONSE'),
     parentMessageId: z.string(),
     data: z.record(z.string(), fieldDataSchema),
+    session: z.string(),
   }),
   // TODO: Add input form response success and error messages
   baseMessageSchema.extend({
     type: z.literal('INPUT_FORM_CANCELLATION'),
     parentMessageId: z.string(),
+    session: z.string(),
   }),
   // TODO: Add cancellation success and error messages
   baseMessageSchema.extend({
     type: z.literal('TOOL_COMPLETION'),
     output: z.unknown(),
+    session: z.string(),
   }),
   baseMessageSchema.extend({
     type: z.literal('TOOL_ERROR'),
     errorMessage: z.string(),
+    session: z.string(),
   }),
 ])
 export type Message = z.infer<typeof messageSchema>
