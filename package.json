@@ -1,0 +1,19 @@
+{
+  "name": "reactive-func",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "format": "prettier --write --cache --no-error-on-unmatched-pattern --ignore-path=.gitignore ."
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "prettier": "^3.5.3"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "zod": "^3.24.3"
+  }
+}
